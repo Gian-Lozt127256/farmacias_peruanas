@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Historial de Devoluciones{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4 text-primary"><i class="fas fa-clipboard-list"></i> Historial de Devoluciones</h2>
+
+  <div class="mb-3">
+    <a href="{{ url_for('farmaceutico.dashboard') }}" class="btn btn-secondary">
+      <i class="fas fa-arrow-left"></i> Volver al Menú
+    </a>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-bordered table-striped align-middle">
+      <thead class="table-info">
+        <tr class="text-center">
+          <th>ID Devolución</th>
+          <th>Fecha</th>
+          <th>Producto</th>
+          <th>ID Venta</th>
+          <th>Cantidad</th>
+          <th>Motivo</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in devoluciones %}
+        <tr>
+          <td class="text-center">{{ d.id_devolucion }}</td>
+          <td>{{ d.fecha.strftime('%Y-%m-%d %H:%M') }}</td>
+          <td>{{ productos.get(d.id_producto, 'Producto desconocido') }}</td>
+          <td>{{ d.id_venta }} - {{ ventas.get(d.id_venta) }}</td>
+          <td class="text-center">{{ d.cantidad }}</td>
+          <td>{{ d.motivo }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- FontAwesome si aún no está en tu base.html -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+{% endblock %}

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Inicio Farmacéutico</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body class="farmaceutico-home-bg">
+    <div class="container">
+        <div class="card-home">
+            <h2>Bienvenido, Farmacéutico</h2>
+            <p>Selecciona una de las siguientes opciones para gestionar ventas y devoluciones.</p>
+            <div class="actions">
+                <a class="button-link" href="{{ url_for('farmaceutico.ventas') }}">Ir a Ventas</a>
+                <a class="button-link" href="{{ url_for('farmaceutico.historial_ventas') }}">Historial de Ventas</a>
+                <a class="button-link" href="{{ url_for('farmaceutico.devoluciones') }}">Registrar Devolución</a>
+                <a class="button-link" href="{{ url_for('farmaceutico.historial_devoluciones') }}">Historial de Devoluciones</a>
+                <a class="button-link logout" href="{{ url_for('auth.logout') }}">Cerrar Sesión</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

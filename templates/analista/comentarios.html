@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}Comentarios sobre Predicciones{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2> Comentarios sobre Predicciones</h2>
+    <a href="{{ url_for('analista.dashboard') }}" class="btn btn-outline-secondary"> Volver al Home</a>
+  </div>
+
+  <!-- Formulario de Comentario -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-body">
+      <form id="form-comentario">
+        <div class="mb-3">
+          <label for="id_prediccion" class="form-label">ID de Predicción</label>
+          <input type="number" class="form-control" id="id_prediccion" required>
+        </div>
+        <div class="mb-3">
+          <label for="descripcion" class="form-label">Comentario</label>
+          <textarea class="form-control" id="descripcion" rows="3" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary"> Guardar Comentario</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Comentarios Recientes -->
+  <h4 class="mt-4"> Comentarios Recientes</h4>
+  <div id="comentarios-recientes" class="mt-3">
+    <div class="text-muted">Cargando comentarios...</div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  function cargarComentarios() {
+    fetch('/analista/comentarios_json')
+      .then(res => res.json())
+      .then(data => {
+        const contenedor = document.getElementById('comentarios-recientes');
+        if (data.length === 0) {
+          contenedor.innerHTML = '<div class="alert alert-info">No hay comentarios disponibles.</div>';
+          return;
+        }
+
+        contenedor.innerHTML = data.map(c => `
+          <div class="card mb-2 shadow-sm" data-id="${c.id_comentario}">
+            <div class="card-body">
+              <h6 class="card-subtitle mb-2 text-muted">Predicción ID: ${c.id_prediccion}</h6>
+              <p class="card-text">${c.descripcion}</p>
+              <small class="text-muted">${c.fecha}</small>
+              <button class="btn btn-sm btn-danger float-end mt-2 eliminar-comentario">Eliminar</button>
+            </div>
+          </div>
+        `).join('');
+
+        document.querySelectorAll('.eliminar-comentario').forEach(btn => {
+          btn.addEventListener('click', function () {
+            const card = this.closest('.card');
+            const id = card.getAttribute('data-id');
+            eliminarComentario(id);
+          });
+        });
+      });
+  }
+
+  document.getElementById('form-comentario').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const id = document.getElementById('id_prediccion').value;
+    const desc = document.getElementById('descripcion').value;
+
+    fetch('/analista/comentario_prediccion', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id_prediccion: id, descripcion: desc })
+    })
+    .then(res => res.json())
+    .then(() => {
+      this.reset();
+      cargarComentarios();
+    });
+  });
+
+  function eliminarComentario(id) {
+    fetch(`/analista/eliminar_comentario/${id}`, {
+      method: 'DELETE'
+    })
+    .then(res => res.json())
+    .then(() => cargarComentarios());
+  }
+
+  cargarComentarios();
+});
+</script>
+{% endblock %}

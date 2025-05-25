@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% block title %}Visualización de Dashboards{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="text-center mb-4">
+    <h2 class="fw-bold text-primary"> Visualización de Dashboards</h2>
+    <p class="text-muted">Revisión de dashboards generados por el analista para análisis estratégico.</p>
+  </div>
+
+  <div class="row row-cols-1 row-cols-md-2 g-4" id="zona-graficas">
+    <!-- Dashboards se renderizan aquí -->
+  </div>
+
+  <div class="text-center mt-4">
+    <a href="{{ url_for('gerente.dashboard') }}" class="btn btn-outline-secondary">
+      Volver al Panel del Gerente
+    </a>
+  </div>
+</div>
+
+<style>
+  .card-body {
+    position: relative;
+    padding: 20px;
+  }
+
+  .card-body canvas {
+    width: 100% !important;
+    height: 300px !important;
+  }
+
+  .card-title {
+    font-weight: bold;
+    color: #333;
+  }
+
+  .card p {
+    font-size: 14px;
+    color: #555;
+  }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const zona = document.getElementById('zona-graficas');
+
+  function renderGrafica(config) {
+    const chartId = 'grafica-' + Math.random().toString(36).substring(2);
+    const card = document.createElement('div');
+    card.className = 'col';
+    const titulo = config.tipo_grafica?.toUpperCase() || 'GRÁFICO';
+    const eje_x = config.eje_x || 'N/D';
+    const eje_y = config.eje_y || 'N/D';
+
+    card.innerHTML = `
+      <div class="card shadow-sm h-100 border-0">
+        <div class="card-body">
+          <h5 class="card-title">${titulo}</h5>
+          <p><strong>Eje X:</strong> ${eje_x} | <strong>Eje Y:</strong> ${eje_y}</p>
+          <canvas id="${chartId}"></canvas>
+        </div>
+      </div>
+    `;
+    zona.appendChild(card);
+
+    fetch(`/analista/data_grafica?x=${eje_x}&y=${eje_y}`)
+      .then(res => res.json())
+      .then(data => {
+        const ctx = document.getElementById(chartId).getContext('2d');
+        new Chart(ctx, {
+          type: config.tipo_grafica,
+          data: {
+            labels: data.labels,
+            datasets: [{
+              label: `${eje_y} vs ${eje_x}`,
+              data: data.values,
+              backgroundColor: [
+                'rgba(54, 162, 235, 0.5)',
+                'rgba(255, 99, 132, 0.5)',
+                'rgba(255, 206, 86, 0.5)',
+                'rgba(75, 192, 192, 0.5)',
+                'rgba(153, 102, 255, 0.5)'
+              ],
+              borderColor: 'rgba(0, 0, 0, 0.1)',
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'top' }
+            }
+          }
+        });
+      });
+  }
+
+  function cargarDashboards() {
+    fetch('/gerente/cargar_dashboards_gerente')
+      .then(res => res.json())
+      .then(data => {
+        zona.innerHTML = '';
+        data.forEach(d => {
+          if (d.configuracion) renderGrafica(d.configuracion);
+        });
+      });
+  }
+
+  cargarDashboards();
+});
+</script>
+{% endblock %}

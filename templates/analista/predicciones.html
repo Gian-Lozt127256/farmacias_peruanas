@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>🔮 Predicciones de Demanda</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background-color: #f7f9fc;
+        }
+        h2 {
+            color: #2c3e50;
+        }
+        .seccion {
+            margin-top: 30px;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        .boton {
+            margin-top: 10px;
+            padding: 10px 16px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .boton:hover {
+            background-color: #218838;
+        }
+        .formulario input, .formulario select, .formulario textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 6px;
+            margin-bottom: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+        canvas {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+        .nav-buttons {
+            margin-bottom: 20px;
+        }
+        .nav-buttons a {
+            display: inline-block;
+            padding: 10px 16px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        .nav-buttons a:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+<div class="nav-buttons">
+    <a href="{{ url_for('analista.dashboard') }}"> Volver al Dashboard</a>
+    <a href="https://colab.research.google.com/" target="_blank"> Ir a Google Colab</a>
+</div>
+
+<h2> Módulo de Predicciones de Demanda</h2>
+
+<div class="seccion">
+    <h3> Subir Archivo de Predicciones</h3>
+    <form id="formPrediccion" enctype="multipart/form-data">
+        <input type="file" name="archivo" accept=".csv" required>
+        <button type="submit" class="boton"> Subir</button>
+    </form>
+</div>
+
+<div class="seccion">
+    <h3> Comparación de Ventas Reales vs Predichas</h3>
+    <canvas id="graficoPrediccion" width="800" height="300"></canvas>
+</div>
+
+<div class="seccion formulario">
+    <h3> Justificación de la Predicción</h3>
+    <form id="formComentario">
+        <label>Producto:</label>
+        <input type="text" name="producto" required>
+        <label>Comentario:</label>
+        <textarea name="comentario" rows="4" required></textarea>
+        <button type="submit" class="boton"> Guardar Comentario</button>
+    </form>
+</div>
+
+<div class="seccion">
+    <h3> Exportar Datos</h3>
+    <button class="boton" onclick="window.location.href='/analista/exportar_csv'">Descargar Datos Actuales</button>
+    <button class="boton" onclick="window.location.href='/analista/exportar_predicciones'"> Descargar Predicciones</button>
+</div>
+
+<script>
+    let grafico;
+
+    function renderizarGrafico(fechas, reales, predichas) {
+        const ctx = document.getElementById('graficoPrediccion').getContext('2d');
+        if (grafico) grafico.destroy();
+        grafico = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: fechas,
+                datasets: [
+                    {
+                        label: 'Ventas Reales',
+                        data: reales,
+                        borderColor: 'blue',
+                        borderWidth: 2,
+                        fill: false
+                    },
+                    {
+                        label: 'Predicciones',
+                        data: predichas,
+                        borderColor: 'orange',
+                        borderDash: [5, 5],
+                        borderWidth: 2,
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: { title: { display: true, text: 'Fecha' } },
+                    y: { title: { display: true, text: 'Unidades Vendidas' }, beginAtZero: true }
+                }
+            }
+        });
+    }
+
+    $('#formPrediccion').on('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        $.ajax({
+            url: '/analista/cargar_predicciones',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(data) {
+                if (data.fechas) {
+                    renderizarGrafico(data.fechas, data.reales, data.predichas);
+                } else {
+                    alert(' El archivo no tiene el formato correcto.');
+                }
+            },
+            error: function() {
+                alert(' Error al cargar predicciones.');
+            }
+        });
+    });
+
+    $('#formComentario').on('submit', function(e) {
+        e.preventDefault();
+        const comentario = {
+            id_prediccion: 1,
+            descripcion: $('textarea[name="comentario"]').val()
+        };
+        $.ajax({
+            url: '/analista/comentario_prediccion',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(comentario),
+            success: function(response) {
+                alert(response.mensaje);
+            },
+            error: function() {
+                alert(' Error al guardar comentario.');
+            }
+        });
+    });
+</script>
+
+</body>
+</html>

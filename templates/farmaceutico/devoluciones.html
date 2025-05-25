@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block title %}Registrar Devolución{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4 text-danger"><i class="fas fa-undo-alt"></i> Registrar Devolución</h2>
+
+  <div class="mb-3">
+    <a href="{{ url_for('farmaceutico.dashboard') }}" class="btn btn-secondary">
+      <i class="fas fa-arrow-left"></i> Volver al Menú
+    </a>
+    <a href="{{ url_for('farmaceutico.historial_devoluciones') }}" class="btn btn-info">
+      <i class="fas fa-history"></i> Ver Historial
+    </a>
+  </div>
+
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <div class="alert alert-warning" role="alert">
+        {% for msg in messages %}
+          <div>{{ msg }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('farmaceutico.registrar_devolucion') }}">
+        <div class="mb-3">
+          <label for="id_producto" class="form-label">Producto</label>
+          <select name="id_producto" id="id_producto" class="form-select" required>
+            <option value="" disabled selected>Seleccione un producto</option>
+            {% for producto in productos %}
+            <option value="{{ producto.id_producto }}">{{ producto.nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label for="id_venta" class="form-label">ID de Venta</label>
+          <select name="id_venta" id="id_venta" class="form-select" required>
+            <option value="" disabled selected>Seleccione una venta</option>
+            {% for venta in ventas %}
+            <option value="{{ venta.id_venta }}">{{ venta.id_venta }} - {{ venta.fecha.strftime('%Y-%m-%d %H:%M') }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label for="cantidad" class="form-label">Cantidad</label>
+          <input type="number" name="cantidad" id="cantidad" min="1" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+          <label for="motivo" class="form-label">Motivo</label>
+          <input type="text" name="motivo" id="motivo" class="form-control" placeholder="Ej. Producto defectuoso" required>
+        </div>
+
+        <div class="text-center">
+          <button type="submit" class="btn btn-danger">
+            <i class="fas fa-save"></i> Registrar Devolución
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- FontAwesome si no está en base.html -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+{% endblock %}

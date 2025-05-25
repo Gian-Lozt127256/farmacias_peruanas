@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Historial de Ventas{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4 text-primary"><i class="fas fa-receipt"></i> Historial de Ventas</h2>
+
+  <a href="{{ url_for('farmaceutico.dashboard') }}" class="btn btn-secondary mb-3">
+    <i class="fas fa-arrow-left"></i> Volver al Menú
+  </a>
+
+  {% for venta in ventas %}
+  <div class="card mb-4 shadow-sm">
+    <div class="card-header bg-light">
+      <strong>Venta Nº {{ venta.id_venta }}</strong> |
+      <span class="text-muted">Fecha:</span> {{ venta.fecha.strftime('%Y-%m-%d %H:%M') }} |
+      <span class="text-muted">Usuario:</span> {{ usuarios.get(venta.id_usuario, 'Desconocido') }} |
+      <span class="text-muted">Sucursal:</span> {{ venta.id_sucursal }}
+    </div>
+    <div class="card-body">
+      <table class="table table-bordered table-sm table-striped mb-0">
+        <thead class="table-info">
+          <tr>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Precio Unitario (S/)</th>
+            <th>Subtotal (S/)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for detalle in detalles if detalle.id_venta == venta.id_venta %}
+          <tr>
+            <td>{{ productos.get(detalle.id_producto, 'Producto desconocido') }}</td>
+            <td>{{ detalle.cantidad }}</td>
+            <td>{{ "%.2f"|format(detalle.precio_unitario) }}</td>
+            <td>{{ "%.2f"|format(detalle.subtotal) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <div class="mt-3 text-end">
+        <strong class="text-success">TOTAL: S/. {{ "%.2f"|format(venta.total) }}</strong>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- FontAwesome para íconos si no está en base.html -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+{% endblock %}

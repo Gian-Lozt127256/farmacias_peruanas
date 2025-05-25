@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block title %}Exportar Datos a CSV{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4">Exportar Datos Manualmente</h2>
+
+  <form method="POST" class="card p-4 mb-4 shadow-sm">
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <label for="tabla" class="form-label">Tabla</label>
+        <select name="tabla" id="tabla" class="form-select" required onchange="this.form.submit()">
+          <option value="">Seleccionar tabla...</option>
+          {% for clave, nombre in tablas.items() %}
+          <option value="{{ clave }}" {% if request.form.tabla == clave %}selected{% endif %}>{{ nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% if columnas %}
+      <div class="col-md-4">
+        <label for="columna" class="form-label">Columna para Filtrar</label>
+        <select name="columna" id="columna" class="form-select">
+          <option value="">Todas</option>
+          {% for col in columnas %}
+          <option value="{{ col }}" {% if request.form.columna == col %}selected{% endif %}>{{ col }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label for="valor" class="form-label">Valor de Filtro</label>
+        <input type="text" name="valor" id="valor" class="form-control" value="{{ request.form.valor or '' }}">
+      </div>
+      {% endif %}
+    </div>
+
+    {% if columnas %}
+    <div class="text-end">
+      <button type="submit" class="btn btn-primary">🔍 Filtrar Datos</button>
+    </div>
+    {% endif %}
+  </form>
+
+  {% if data %}
+  <div class="card shadow-sm">
+    <div class="card-body table-responsive">
+      <h5 class="card-title">Resultados ({{ data|length }} registros)</h5>
+      <table class="table table-bordered table-striped table-hover">
+        <thead>
+          <tr>
+            {% for col in columnas %}
+            <th>{{ col }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for fila in data %}
+          <tr>
+            {% for col in columnas %}
+            <td>{{ fila[col] }}</td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <form method="POST" action="{{ url_for('analista.descargar_csv_manual') }}" class="mt-3">
+    <input type="hidden" name="tabla" value="{{ request.form.tabla }}">
+    <input type="hidden" name="columna" value="{{ request.form.columna }}">
+    <input type="hidden" name="valor" value="{{ request.form.valor }}">
+    <button type="submit" class="btn btn-success"> Descargar CSV</button>
+  </form>
+  {% endif %}
+
+  <div class="mt-4">
+    <a href="{{ url_for('analista.dashboard') }}" class="btn btn-secondary"> Volver al Home</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% block title %} Gestión de Dashboards{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+  <!-- Botones superiores -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="text-primary"> Crear y Administrar Dashboards</h2>
+    <div>
+      <a href="{{ url_for('analista.dashboard') }}" class="btn btn-outline-secondary me-2"> Volver al Home</a>
+      <a href="{{ url_for('auth.login') }}" class="btn btn-outline-danger"> Cerrar Sesión</a>
+    </div>
+  </div>
+
+  <!-- Formulario -->
+  <form id="form-grafica" class="border rounded p-3 mb-4 bg-light shadow-sm">
+    <div class="row g-3">
+      <div class="col-md-3">
+        <label for="eje_x" class="form-label">Eje X</label>
+        <select class="form-select" id="eje_x" required>
+          <option value="fecha">Fecha</option>
+          <option value="nombre_producto">Producto</option>
+          <option value="nombre_sucursal">Sucursal</option>
+          <option value="descripcion">Descripción Producto</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label for="eje_y" class="form-label">Eje Y</label>
+        <select class="form-select" id="eje_y" required>
+          <option value="total_ventas">Ventas</option>
+          <option value="cantidad_prevista">Predicción</option>
+          <option value="stock_disponible">Stock</option>
+          <option value="cantidad_devuelta">Devoluciones</option>
+          <option value="precio">Precio</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label for="tipo_grafica" class="form-label">Tipo de gráfica</label>
+        <select class="form-select" id="tipo_grafica" required>
+          <option value="bar">Barras</option>
+          <option value="line">Líneas</option>
+          <option value="pie">Circular</option>
+          <option value="radar">Radar</option>
+          <option value="doughnut">Doughnut</option>
+          <option value="polarArea">Polar Area</option>
+        </select>
+      </div>
+      <div class="col-md-3 d-grid align-content-end">
+        <button type="submit" class="btn btn-success">➕ Agregar Gráfica</button>
+      </div>
+    </div>
+  </form>
+
+  <!-- Zona de Gráficas -->
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="zona-graficas">
+    <!-- Render dinámico -->
+  </div>
+</div>
+
+<!-- Estilos específicos -->
+<style>
+  .card-body canvas {
+    max-height: 300px !important;
+    width: 100% !important;
+  }
+</style>
+
+<!-- Script -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const zona = document.getElementById('zona-graficas');
+  const form = document.getElementById('form-grafica');
+
+  function renderGrafica(config, id_dashboard = null) {
+    const chartId = 'grafica-' + Math.random().toString(36).substring(7);
+    const titulo = config.tipo_grafica?.toUpperCase() || 'GRÁFICO';
+    const eje_x = config.eje_x || 'N/D';
+    const eje_y = config.eje_y || 'N/D';
+
+    const card = document.createElement('div');
+    card.className = 'col';
+    card.innerHTML = `
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h6 class="card-title text-center">${titulo}</h6>
+          <p class="text-muted text-center"><strong>X:</strong> ${eje_x} | <strong>Y:</strong> ${eje_y}</p>
+          <canvas id="${chartId}"></canvas>
+          ${id_dashboard !== null ? `
+            <div class="text-center mt-2">
+              <button class="btn btn-sm btn-danger eliminar-btn" data-id="${id_dashboard}">
+                Eliminar
+              </button>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+    zona.appendChild(card);
+
+    fetch(`/analista/data_grafica?x=${eje_x}&y=${eje_y}`)
+      .then(res => res.json())
+      .then(data => {
+        const ctx = document.getElementById(chartId).getContext('2d');
+        new Chart(ctx, {
+          type: config.tipo_grafica,
+          data: {
+            labels: data.labels,
+            datasets: [{
+              label: `${eje_y} vs ${eje_x}`,
+              data: data.values,
+              backgroundColor: [
+                'rgba(54, 162, 235, 0.6)',
+                'rgba(255, 99, 132, 0.6)',
+                'rgba(255, 206, 86, 0.6)',
+                'rgba(75, 192, 192, 0.6)',
+                'rgba(153, 102, 255, 0.6)'
+              ],
+              borderColor: 'rgba(0,0,0,0.1)',
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false
+          }
+        });
+      });
+  }
+
+  function eliminarDashboard(id) {
+    if (!confirm('¿Eliminar esta gráfica permanentemente?')) return;
+    fetch(`/analista/eliminar_dashboard/${id}`, { method: 'DELETE' })
+      .then(res => res.json())
+      .then(() => cargarDashboards())
+      .catch(() => alert('Error al eliminar'));
+  }
+
+  document.addEventListener('click', function (e) {
+    if (e.target && e.target.classList.contains('eliminar-btn')) {
+      const id = e.target.dataset.id;
+      eliminarDashboard(id);
+    }
+  });
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const config = {
+      eje_x: document.getElementById('eje_x').value,
+      eje_y: document.getElementById('eje_y').value,
+      tipo_grafica: document.getElementById('tipo_grafica').value
+    };
+
+    fetch('/analista/guardar_dashboard', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(config)
+    }).then(() => cargarDashboards());
+  });
+
+  function cargarDashboards() {
+    fetch('/analista/cargar_dashboards')
+      .then(res => res.json())
+      .then(data => {
+        zona.innerHTML = '';
+        data.forEach(d => {
+          if (d.configuracion) renderGrafica(d.configuracion, d.id_dashboard);
+        });
+      });
+  }
+
+  cargarDashboards();
+});
+</script>
+{% endblock %}

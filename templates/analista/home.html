@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Inicio Analista</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body class="farmaceutico-home-bg">
+    <div class="container">
+        <div class="card-home">
+            <h2>Bienvenido, Analista</h2>
+            <p>Selecciona una opción para monitorear, analizar y exportar información.</p>
+            <div class="actions">
+                <a class="button-link" href="{{ url_for('analista.monitoreo') }}"> Monitoreo</a>
+                <a class="button-link" href="{{ url_for('analista.predicciones') }}"> Predicciones</a>
+                <a class="button-link" href="{{ url_for('analista.dashboards') }}"> Dashboards</a>
+                <a class="button-link" href="{{ url_for('analista.comentarios') }}"> Comentarios</a>
+                <a class="button-link" href="{{ url_for('analista.exportar_csv') }}"> Exportar CSV</a>
+                <a class="button-link logout" href="{{ url_for('auth.login') }}"> Cerrar Sesión</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
