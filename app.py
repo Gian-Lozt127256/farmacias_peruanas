@@ -1,5 +1,5 @@
 
-from flask import Flask
+from flask import Flask, redirect, url_for
 from config import init_app
 from routes.auth_routes import auth_bp
 from routes.farmaceutico_routes import farmaceutico_bp
@@ -17,7 +17,7 @@ app.register_blueprint(gerente_bp, url_prefix='/gerente')
 
 @app.route('/')
 def index():
-    return 'Sistema de Farmacias - OK'
+    return redirect(url_for('auth.login'))
 
 if __name__ == '__main__':
     app.run(debug=True, host="0.0.0.0")
