@@ -20,53 +20,53 @@
   {% endwith %}
 
   <form id="form-carrito" method="POST" action="{{ url_for('farmaceutico.procesar_venta') }}">
-    <table class="table table-bordered table-hover align-middle text-center shadow-sm w-100 table-expandida">
-
-      <thead class="table-primary">
-        <tr>
-          <th>Imagen</th>
-          <th>Producto</th>
-          <th>Descripción</th>
-          <th>Precio (S/)</th>
-          <th>Stock</th>
-          <th>Cantidad</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for producto in productos %}
-        <tr class="{% if producto.stock_actual <= producto.stock_minimo %}table-warning{% endif %}">
-          <td>
-            {% if imagenes.get(producto.id_producto) %}
-              <img src="{{ imagenes.get(producto.id_producto) }}" alt="Imagen de {{ producto.nombre }}" class="img-thumbnail">
-            {% else %}
-              <span class="text-muted">Sin imagen</span>
-            {% endif %}
-          </td>
-          <td><strong>{{ producto.nombre }}</strong></td>
-          <td>{{ producto.descripcion }}</td>
-          <td><span class="text-success fw-bold">S/ {{ "%.2f"|format(producto.precio) }}</span></td>
-          <td>
-            {% if producto.stock_actual == 0 %}
-              <span class="badge bg-danger">Agotado</span>
-            {% elif producto.stock_actual <= producto.stock_minimo %}
-              <span class="badge bg-warning text-dark">Bajo: {{ producto.stock_actual }}</span>
-            {% else %}
-              {{ producto.stock_actual }}
-            {% endif %}
-          </td>
-          <td>
-            <input type="number"
-                   name="cantidades[{{ producto.id_producto }}]"
-                   class="form-control"
-                   min="0"
-                   max="{{ producto.stock_actual }}"
-                   value="0">
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-
+    <div class="tabla-scroll-vertical">
+      <table class="table table-bordered table-hover text-center">
+        <thead class="table-primary align-middle">
+          <tr>
+            <th>Imagen</th>
+            <th>Producto</th>
+            <th>Descripción</th>
+            <th>Precio (S/)</th>
+            <th>Stock</th>
+            <th>Cantidad</th>
+          </tr>
+        </thead>
+        <tbody class="align-middle">
+          {% for producto, inventario in resultados %}
+          <tr class="{% if inventario.stock_disponible <= producto.stock_minimo %}table-warning{% endif %}">
+            <td>
+              {% if imagenes.get(producto.id_producto) %}
+                <img src="{{ imagenes.get(producto.id_producto) }}" alt="Imagen de {{ producto.nombre }}" class="img-thumbnail">
+              {% else %}
+                <span class="text-muted">Sin imagen</span>
+              {% endif %}
+            </td>
+            <td><strong>{{ producto.nombre }}</strong></td>
+            <td>{{ producto.descripcion }}</td>
+            <td><span class="text-success fw-bold">S/ {{ "%.2f"|format(producto.precio) }}</span></td>
+            <td>
+              {% if inventario.stock_disponible == 0 %}
+                <span class="badge bg-danger">Agotado</span>
+              {% elif inventario.stock_disponible <= producto.stock_minimo %}
+                <span class="badge bg-warning text-dark">Bajo: {{ inventario.stock_disponible }}</span>
+              {% else %}
+                {{ inventario.stock_disponible }}
+              {% endif %}
+            </td>
+            <td>
+              <input type="number"
+                    name="cantidades[{{ producto.id_producto }}]"
+                    class="form-control"
+                    min="0"
+                    max="{{ inventario.stock_disponible }}"
+                    value="0">
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
     <div class="text-center mt-4">
       <button type="submit" class="btn btn-success btn-lg px-5 shadow">💰 Procesar Venta</button>
     </div>

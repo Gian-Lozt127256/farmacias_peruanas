@@ -8,6 +8,10 @@ body.login-bg {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+input{
+    box-sizing: border-box;
+}
+
 .login-wrapper {
     display: flex;
     justify-content: center;
@@ -17,17 +21,23 @@ body.login-bg {
 }
 
 .login-card {
-    background-color: rgba(255, 255, 255, 0.95);
-    padding: 40px 30px;
+    background-color: rgb(255, 255, 255);
+    padding: 3vh 3vw;
     border-radius: 12px;
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
     width: 100%;
-    max-width: 400px;
+    max-width: 40vw;
     text-align: center;
 }
 
+.login-card h1 {
+    margin: 10px 0;
+    color: #1d108f;
+    text-shadow: 1px 1px 1px rgb(0, 0, 0);
+}
+
 .login-card h2 {
-    margin-bottom: 20px;
+    margin: 10px 0;
     color: #2c3e50;
 }
 
@@ -49,7 +59,7 @@ body.login-bg {
 }
 
 .login-card button {
-    width: 100%;
+    width: 50%;
     padding: 12px;
     margin-top: 20px;
     background-color: #27ae60;
@@ -75,11 +85,21 @@ body.login-bg {
 }
 
 /* ========================== */
+/* MONITOREO */
+/* ========================== */
+
+/* .monitoreo-bg {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f8fb;
+    margin: 0;
+    padding: 30px;
+} */
+
+/* ========================== */
 /* HOME FARMACÉUTICO / ANALISTA */
 /* ========================== */
 body.farmaceutico-home-bg,
 body.analista-home-bg {
-    background: linear-gradient(to right, #f0f4f7, #e0ebf5);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
     display: flex;
@@ -87,11 +107,15 @@ body.analista-home-bg {
     align-items: center;
     height: 100vh;
 }
+body.analista-home-bg {
+    background: linear-gradient(to bottom, #7681e4, #9be5ac);
+}
+body.farmaceutico-home-bg {
+    background: linear-gradient(to bottom, #7681e4, #ffffff);
+}
 
 .container {
-    max-width: 600px;
-    width: 90%;
-    padding: 20px;
+    max-width: 90vw;
 }
 
 .card-home {
@@ -146,16 +170,16 @@ body.analista-home-bg {
 .table td {
     vertical-align: middle;
     padding: 0.75rem;
-    font-size: 15px;
+    font-size: 16px;
     white-space: normal;
     word-break: break-word;
     overflow-wrap: break-word;
 }
 
-.table th {
+/* .table th {
     background-color: #f8f9fa;
     font-weight: bold;
-}
+} */
 
 .table-responsive {
     overflow-x: auto;
@@ -164,12 +188,29 @@ body.analista-home-bg {
     border: 1px solid #dee2e6;
 }
 
+.tabla-scroll-vertical {
+max-height: 60vh;
+overflow-y: auto;
+}
+.tabla-scroll-vertical::-webkit-scrollbar {
+width: 8px;
+}
+
+.tabla-scroll-vertical::-webkit-scrollbar-thumb {
+background-color: #adb5bd;
+border-radius: 4px;
+}
+
+.tabla-scroll-vertical::-webkit-scrollbar-track {
+background-color: #f1f1f1;
+}
+
 /* ========================== */
 /* IMÁGENES DE PRODUCTOS */
 /* ========================== */
 img.img-thumbnail {
-    width: 90px;
-    height: auto;
+    max-width: 15vw;
+    max-height: 15vh;
     object-fit: contain;
 }
 
@@ -216,8 +257,9 @@ img.img-thumbnail {
 /* RESPONSIVE DESIGN */
 /* ========================== */
 @media (max-width: 768px) {
+
     .table th, .table td {
-        font-size: 13px;
+        font-size: 14px;
     }
 
     .btn {
@@ -225,17 +267,36 @@ img.img-thumbnail {
         padding: 8px 14px;
     }
 
-    img.img-thumbnail {
-        width: 60px;
-    }
 }
 
-@media (min-width: 992px) {
+@media (min-width: 768px) and (max-width: 1024px) {
     .table th, .table td {
-        font-size: 16px;
+        font-size: 15px;
     }
 
-    img.img-thumbnail {
-        width: 100px;
-    }
+}
+
+
+/* ========================== */
+/* VISUALIZACIÓN */
+/* ========================== */
+
+.card-body {
+    position: relative;
+    padding: 20px;
+}
+
+.card-body canvas {
+    width: 100% !important;
+    height: 300px !important;
+}
+
+.card-title {
+    font-weight: bold;
+    color: #333;
+}
+
+.card p {
+    font-size: 14px;
+    color: #555;
 }

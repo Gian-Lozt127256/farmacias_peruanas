@@ -5,12 +5,13 @@
     <title>Inicio Analista</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
-<body class="farmaceutico-home-bg">
+<body class="analista-home-bg">
     <div class="container">
         <div class="card-home">
-            <h2>Bienvenido, Analista</h2>
+            <h1>Bienvenido, Analista</h1>
             <p>Selecciona una opción para monitorear, analizar y exportar información.</p>
             <div class="actions">
+                <!-- <a class="button-link" href="{{ url_for('analista.monitoreo') }}"> Monitoreo</a> -->
                 <a class="button-link" href="{{ url_for('analista.monitoreo') }}"> Monitoreo</a>
                 <a class="button-link" href="{{ url_for('analista.predicciones') }}"> Predicciones</a>
                 <a class="button-link" href="{{ url_for('analista.dashboards') }}"> Dashboards</a>

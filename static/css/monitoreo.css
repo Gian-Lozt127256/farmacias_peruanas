@@ -1,0 +1,80 @@
+.seccion {
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    border: 1px solid #000000;
+    padding: 20px;
+    margin-bottom: 20px;
+    height: 60vh;
+    overflow-y: auto;
+}
+.seccion::-webkit-scrollbar {
+width: 8px;
+}
+.seccion::-webkit-scrollbar-thumb {
+background-color: #adb5bd;
+border-radius: 4px;
+}
+.seccion::-webkit-scrollbar-track {
+background-color: #f1f1f1;
+}
+
+.card-stock-ok {
+    border-left: 5px solid #28a745;
+}
+.card-stock-bajo {
+    border-left: 5px solid #dc3545;
+}
+.card-stock-info {
+    border-left: 5px solid #f0e68c;
+}
+.card:hover {
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+    transition: all 0.3s ease;
+}
+.chart-container {
+    position: relative;
+    height: 40vh;
+    margin-top: 20px;
+}
+.back-btn {
+    margin-bottom: 20px;
+}
+.loading {
+    text-align: center;
+    padding: 50px;
+}
+
+.navbar {
+    background-color: #e3f2fd !important; /* celeste claro */
+}
+
+.navbar-brand {
+    font-weight: bold;
+    color: #0d6efd !important;
+}
+
+.btn-outline-secondary {
+    border-color: #0d6efd;
+    color: #0d6efd;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #0d6efd;
+    color: white;
+}
+
+h2, h3 {
+    color: #0d6efd;
+}
+
+.btn-outline-primary {
+    color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.btn-outline-primary:hover {
+    background-color: #0d6efd;
+    color: white;
+}

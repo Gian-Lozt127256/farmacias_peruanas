@@ -1,87 +1,118 @@
 from flask import Blueprint, render_template, request, jsonify, send_file
 from config import db
-from sqlalchemy import text
+from sqlalchemy import text, func
 from models.producto_model import Producto
-from models.venta_model import Venta, DetalleVenta
 from models.prediccion_model import PrediccionDemanda
-from models.alerta_model import Alerta
-from models.imagen_model import ImagenProducto
 from models.comentario_prediccion_model import ComentarioPrediccion
 from models.sucursal_model import Sucursal
 from models.dashboard_model import Dashboard
-from datetime import datetime
+from models.monitoreo import FactInventario, FactVentas, DimProducto, DimSucursal, DimUsuario, DimTiempo
+from datetime import datetime, date
 import csv
 import io
 
+
+
+
+
 analista_bp = Blueprint('analista', __name__, template_folder='../templates/analista')
 
-
-@analista_bp.route('/dashboard')
-def dashboard():
+@analista_bp.route('/home')
+def home():
     return render_template('analista/home.html')
-
 
 @analista_bp.route('/monitoreo')
 def monitoreo():
-    inventarios = db.session.execute(text("""
-        SELECT s.Nombre AS sucursal, p.Nombre AS producto, i.Stock_Disponible, p.Stock_Minimo
-        FROM Inventario i
-        JOIN Producto p ON i.ID_Producto = p.ID_Producto
-        JOIN Sucursal s ON i.ID_Sucursal = s.ID_Sucursal
-        WHERE i.Stock_Disponible < p.Stock_Minimo
-        LIMIT 10
-    """)).fetchall()
+    return render_template('analista/monitoreo.html')
 
-    ventas_data = db.session.execute(text("""
-        SELECT TO_CHAR(v.Fecha, 'HH24:00') AS hora, COUNT(*) AS cantidad
-        FROM Venta v
-        WHERE v.Fecha >= NOW() - INTERVAL '24 HOURS'
-        GROUP BY hora ORDER BY hora
-    """)).fetchall()
+@analista_bp.route('/api/inventario')
+def get_inventory():
+    # Subquery con ROW_NUMBER() por (sucursal_id, producto_id)
+    query = (
+    db.session.query(
+            DimTiempo.fecha,
+            DimSucursal.sucursal_id,
+            DimSucursal.nombre_sucursal.label('sucursal'),
+            DimProducto.producto_id,
+            DimProducto.nombre_producto.label('producto'),
+            FactInventario.stock_disponible,
+            FactInventario.stock_minimo,
+            FactInventario.estado_stock
+        )
+        .join(DimTiempo, DimTiempo.fecha_id == FactInventario.fecha_id)
+        .join(DimSucursal, DimSucursal.sucursal_id == FactInventario.sucursal_id)
+        .join(DimProducto, DimProducto.producto_id == FactInventario.producto_id)
+        .filter(DimTiempo.año == date.today().year)
+    ).all()
+        
+    # Organizar datos por sucursal -> producto -> historial
+    inventarios = {}
+    
+    for row in query:
+        if row.sucursal_id not in inventarios:
+            inventarios[row.sucursal_id] = {}
+        
+        if row.producto_id not in inventarios[row.sucursal_id]:
+            inventarios[row.sucursal_id][row.producto_id] = []
+        
+        inventarios[row.sucursal_id][row.producto_id].append({
+            'fecha': row.fecha.strftime('%Y-%m-%d'),
+            'sucursal': row.sucursal,
+            'producto': row.producto,
+            'stock_actual': row.stock_disponible,
+            'stock_minimo': row.stock_minimo,
+            'estado_stock': row.estado_stock
+        })
+    
+    return jsonify(inventarios)
 
-    horas = [v[0] for v in ventas_data]
-    cantidades = [v[1] for v in ventas_data]
+@analista_bp.route('/api/ventas')
+def get_ventas():
+    query = (
+    db.session.query(
+            DimTiempo.fecha, DimTiempo.año, DimTiempo.mes, DimTiempo.dia,
+            DimSucursal.sucursal_id, DimSucursal.nombre_sucursal.label('sucursal'),
+            func.sum(FactVentas.cantidad_vendida).label('cantidad_vendida')
+        )
+        .join(DimTiempo, DimTiempo.fecha_id == FactVentas.fecha_id)
+        .join(DimSucursal, DimSucursal.sucursal_id == FactVentas.sucursal_id)
+        .filter(DimTiempo.año == date.today().year)  # Filtrar por el año actual
+        .group_by(DimTiempo.fecha, DimTiempo.año, DimTiempo.mes, DimTiempo.dia,
+                  DimSucursal.sucursal_id, DimSucursal.nombre_sucursal)
+        .order_by(DimTiempo.fecha)
+    ).all()
 
-    alertas = db.session.execute(text("""
-        SELECT Fecha, Tipo, Mensaje
-        FROM Alerta
-        WHERE Estado = 'Activo'
-        ORDER BY Fecha DESC
-        LIMIT 10
-    """)).fetchall()
+        
+    # Organizar datos por sucursal -> fecha -> historial
+    ventas = {}
+    
+    for row in query:
+        if row.sucursal_id not in ventas:
+            ventas[row.sucursal_id] = []
 
-    return render_template('analista/monitoreo.html',
-                           inventarios=inventarios,
-                           horas=horas,
-                           cantidades=cantidades,
-                           alertas=alertas)
+        ventas[row.sucursal_id].append({
+            'fecha': row.fecha.strftime('%Y-%m-%d'),
+            'año': row.año,
+            'mes': row.mes,
+            'dia': row.dia,
+            'sucursal': row.sucursal,
+            'cantidad_vendida': row.cantidad_vendida
+        })
+
+    return jsonify(ventas)
 
 
-@analista_bp.route('/filtrar_ventas', methods=['GET'])
-def filtrar_ventas():
-    try:
-        rango = request.args.get('horas')
-        intervalo = {
-            '24': '24 HOURS',
-            '72': '72 HOURS',
-            '168': '168 HOURS'
-        }.get(rango, '24 HOURS')
 
-        query = text("""
-            SELECT TO_CHAR(Fecha, 'HH24:00') AS hora, COUNT(*) AS cantidad
-            FROM Venta
-            WHERE Fecha >= NOW() - INTERVAL :intervalo
-            GROUP BY hora ORDER BY hora
-        """)
 
-        ventas_data = db.session.execute(query, {'intervalo': intervalo}).fetchall()
-        horas = [v[0] for v in ventas_data]
-        cantidades = [v[1] for v in ventas_data]
 
-        return jsonify({'horas': horas, 'cantidades': cantidades})
-    except Exception as e:
-        print("Error en /filtrar_ventas:", e)
-        return jsonify({'error': 'Error interno del servidor'}), 500
+
+
+
+
+
+
+
+
 
 
 @analista_bp.route('/predicciones')

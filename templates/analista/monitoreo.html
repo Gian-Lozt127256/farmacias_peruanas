@@ -1,237 +1,108 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>📡 Monitoreo de Sucursales</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f4f8fb;
-      margin: 0;
-      padding: 30px;
-    }
-
-    h2 {
-      text-align: center;
-      color: #2c3e50;
-      margin-bottom: 30px;
-    }
-
-    .seccion {
-      background: #ffffff;
-      border-radius: 10px;
-      padding: 25px;
-      margin-bottom: 30px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    }
-
-    .seccion h3 {
-      color: #007bff;
-      margin-bottom: 15px;
-    }
-
-    .stock-critico {
-      background-color: #fff3cd;
-      color: #856404;
-      padding: 12px 15px;
-      margin-bottom: 10px;
-      border-left: 5px solid #ffc107;
-      border-radius: 6px;
-    }
-
-    .alerta-activa {
-      background-color: #f8d7da;
-      color: #721c24;
-      padding: 10px;
-      border-left: 5px solid #dc3545;
-      border-radius: 6px;
-      margin-bottom: 10px;
-    }
-
-    .filtro-select {
-      padding: 6px;
-      margin-bottom: 10px;
-      font-size: 14px;
-    }
-
-    canvas {
-      max-width: 100%;
-      background-color: #fff;
-      border: 1px solid #dee2e6;
-      border-radius: 5px;
-      padding: 10px;
-    }
-
-    ul {
-      padding-left: 20px;
-    }
-
-    @media (max-width: 768px) {
-      body {
-        padding: 15px;
-      }
-
-      .seccion {
-        padding: 15px;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Inventario</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/monitoreo.css') }}">
+   
 </head>
+
 <body>
-  <h2> Monitoreo de Sucursales</h2>
-
-  <!-- Sección 1: Control de Stock Crítico -->
-  <div class="seccion">
-    <h3> Control de Stock Crítico</h3>
-    {% if inventarios %}
-      {% for inv in inventarios %}
-        <div class="stock-critico">
-           <strong>{{ inv.sucursal }}</strong> - {{ inv.producto }}: Stock = <strong>{{ inv.stock_disponible }}</strong> (mínimo: {{ inv.stock_minimo }})
+    <nav class="navbar navbar-expand-lg mb-4 border-bottom shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Monitoreo de Sucursales</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" 
+                    data-bs-target="#navbarContent" aria-controls="navbarContent" 
+                    aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse justify-content-end" id="navbarContent">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a href="{{ url_for('analista.home') }}" class="btn btn-outline-secondary">
+                            ⬅ Volver al Inicio
+                        </a>
+                    </li>
+                </ul>
+            </div>
         </div>
-      {% endfor %}
-    {% else %}
-      <p class="text-success"> Todas las sucursales mantienen niveles óptimos de stock.</p>
-    {% endif %}
-  </div>
+    </nav>
 
-  <!-- Sección 2: Ventas por Hora -->
-  <div class="seccion">
-    <h3> Ventas por Hora</h3>
-    <label>Filtrar por:</label>
-    <select id="filtroVentas" class="filtro-select">
-      <option value="24">Últimas 24 horas</option>
-      <option value="72">Últimos 3 días</option>
-      <option value="168">Últimos 7 días</option>
-    </select>
-    <canvas id="ventasChart" height="200"></canvas>
-  </div>
+    <div class="container mt-4">
+        <!-- Sección 1: Control de Stock Crítico -->
+        <h2>
+            Control de Stock
+            <button class="btn btn-sm btn-outline-primary toggleSeccion" data-target="seccionControl">-</button>
+        </h2>
+        <div class="seccion" id="seccionControl"">
+            <!-- Botón de regreso -->
+            <div id="invBackButton" class="d-none">
+                <button class="btn btn-secondary mb-2" onclick="goInvBack()">
+                    ← Regresar
+                </button>
+            </div>
+            
+            <!-- Vista de sucursales -->
+            <div id="invSucursalesView">
+                <h3>Sucursales</h3>
+                <div id="invSucursalesContainer" class="row">
+                    <div class="loading">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p>Cargando sucursales...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Vista de productos -->
+            <div id="invProductosView" class="d-none">
+                <h3 id="invSucursalTitle">Productos</h3>
+                <div id="invProductosContainer" class="row"></div>
+            </div>
+            
+            <!-- Vista de gráfico -->
+            <div id="invGraficoView" class="d-none">
+                <h3 id="invProductoTitle">Historial de Inventario</h3>
+                <div class="chart-container">
+                    <canvas id="inventoryChart"></canvas>
+                </div>
+            </div>      
+        </div>
 
-  <!-- Sección 3: Tendencia de Ventas -->
-  <div class="seccion">
-    <h3> Tendencia de Ventas con Valores Atípicos</h3>
-    <label>Filtrar por:</label>
-    <select id="filtroTendencia" class="filtro-select">
-      <option value="24">Últimas 24 horas</option>
-      <option value="72">Últimos 3 días</option>
-      <option value="168">Últimos 7 días</option>
-    </select>
-    <canvas id="tendenciaChart" height="200"></canvas>
-  </div>
+        <!-- Sección 2: Historial de Ventas -->
+        <h2>
+            Historial de Ventas
+            <button class="btn btn-sm btn-outline-primary toggleSeccion" data-target="seccionVentas">-</button>
+        </h2>
+        <div class="seccion" id="seccionVentas">
+            <div id="ventasView">
+                <h3>Sucursales</h3>
+                <div class="row" id="ventasSucursalesContainer">
+                    <div class="loading">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p>Cargando sucursales...</p>
+                    </div>
+                </div>
+            </div>
 
-  <!-- Sección 4: Alertas -->
-  <div class="seccion">
-    <h3>🚨 Alertas Activas</h3>
-    {% if alertas %}
-      <ul>
-        {% for alerta in alertas %}
-        <li class="alerta-activa"> {{ alerta.Fecha }} - {{ alerta.Tipo }}: {{ alerta.Mensaje }}</li>
-        {% endfor %}
-      </ul>
-    {% else %}
-      <p class="text-muted"> No se han registrado alertas activas.</p>
-    {% endif %}
-  </div>
+            <div id="ventasGraficoView" class="d-none">
+                <button class="btn btn-secondary mb-2" onclick="goVentasBack()">← Volver</button>
+                <h4 id="ventasSucursalTitle"></h4>
+                <div class="chart-container">
+                    <canvas id="ventasChart"></canvas>
+                </div>
+            </div>    
+        </div>
+    </div>
 
-  <!-- Scripts de gráficos -->
-  <script>
-    let horas = {{ horas | tojson | safe }};
-    let cantidades = {{ cantidades | tojson | safe }};
-
-    const ctx1 = document.getElementById('ventasChart').getContext('2d');
-    const ctx2 = document.getElementById('tendenciaChart').getContext('2d');
-
-    const ventasChart = new Chart(ctx1, {
-      type: 'bar',
-      data: {
-        labels: horas,
-        datasets: [{
-          label: 'Cantidad de Ventas',
-          data: cantidades,
-          backgroundColor: 'rgba(54, 162, 235, 0.6)',
-          borderColor: '#007bff',
-          borderWidth: 1
-        }]
-      },
-      options: {
-        responsive: true,
-        scales: {
-          x: { title: { display: true, text: 'Hora' } },
-          y: { title: { display: true, text: 'Cantidad' }, beginAtZero: true }
-        }
-      }
-    });
-
-    function detectarOutliers(data) {
-      const sorted = [...data].sort((a, b) => a - b);
-      const q1 = sorted[Math.floor(data.length / 4)];
-      const q3 = sorted[Math.ceil(data.length * 3 / 4)];
-      const iqr = q3 - q1;
-      const lower = q1 - 1.5 * iqr;
-      const upper = q3 + 1.5 * iqr;
-      return data.map(v => (v < lower || v > upper ? v : null));
-    }
-
-    const outliers = detectarOutliers(cantidades);
-    const colores = cantidades.map((v, i) => outliers[i] !== null ? 'rgba(255, 99, 132, 0.8)' : 'rgba(54, 162, 235, 0.4)');
-
-    const tendenciaChart = new Chart(ctx2, {
-      type: 'line',
-      data: {
-        labels: horas,
-        datasets: [{
-          label: 'Tendencia de Ventas',
-          data: cantidades,
-          fill: false,
-          borderColor: 'orange',
-          tension: 0.3,
-          pointBackgroundColor: colores
-        }]
-      },
-      options: {
-        responsive: true,
-        scales: {
-          x: { title: { display: true, text: 'Hora' } },
-          y: { title: { display: true, text: 'Cantidad' }, beginAtZero: true }
-        }
-      }
-    });
-
-    function actualizarGraficos(horas, cantidades) {
-      const nuevosOutliers = detectarOutliers(cantidades);
-      const nuevosColores = cantidades.map((v, i) => nuevosOutliers[i] !== null ? 'rgba(255, 99, 132, 0.8)' : 'rgba(54, 162, 235, 0.4)');
-      ventasChart.data.labels = horas;
-      ventasChart.data.datasets[0].data = cantidades;
-      ventasChart.update();
-
-      tendenciaChart.data.labels = horas;
-      tendenciaChart.data.datasets[0].data = cantidades;
-      tendenciaChart.data.datasets[0].pointBackgroundColor = nuevosColores;
-      tendenciaChart.update();
-    }
-
-    function cargarDatos(filtroHoras) {
-      $.ajax({
-        url: `/analista/filtrar_ventas?horas=${filtroHoras}`,
-        type: 'GET',
-        success: function (response) {
-          actualizarGraficos(response.horas, response.cantidades);
-        },
-        error: function () {
-          alert("⚠️ Error al cargar datos filtrados.");
-        }
-      });
-    }
-
-    $('#filtroVentas').on('change', function () {
-      cargarDatos($(this).val());
-    });
-
-    $('#filtroTendencia').on('change', function () {
-      cargarDatos($(this).val());
-    });
-  </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="{{ url_for('static', filename='js/monitoreo.js') }}"></script>
 </body>
 </html>

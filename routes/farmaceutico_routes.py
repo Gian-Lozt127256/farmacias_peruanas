@@ -1,15 +1,22 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, send_file
 from config import db
-from models.producto_model import Producto, ImagenProducto
-from models.venta_model import Venta, DetalleVenta
-from models.devolucion_model import Devolucion
-from models.usuario_model import Usuario
-from datetime import datetime
+#from models.producto_model import Producto, ImagenProducto
+#from models.venta_model import Venta, DetalleVenta
+#from models.devolucion_model import Devolucion
+#from models.usuario_model import Usuario
+from models.sistema import Producto, ImagenProducto, Usuario
+from models.comercial import Venta, DetalleVenta, Devolucion, Inventario
+from datetime import datetime, date
 from io import BytesIO
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 
 farmaceutico_bp = Blueprint('farmaceutico', __name__, template_folder='../templates/farmaceutico')
+
+def query(id_sucursal):
+    query = db.session.query(Producto, Inventario).join(Inventario, Producto.id_producto == Inventario.id_producto)
+    query = query.filter(Inventario.id_sucursal == id_sucursal).order_by(Producto.id_producto)
+    return query
 
 @farmaceutico_bp.route('/dashboard')
 def dashboard():
@@ -17,9 +24,9 @@ def dashboard():
 
 @farmaceutico_bp.route('/ventas')
 def ventas():
-    productos = db.session.query(Producto).filter(Producto.stock_actual > 0).all()
+    resultados = query(id_sucursal=1).all()  # Cambiar según la sucursal actual
     imagenes = {img.id_producto: img.url_imagen for img in db.session.query(ImagenProducto).all()}
-    return render_template('farmaceutico/ventas.html', productos=productos, imagenes=imagenes)
+    return render_template('farmaceutico/ventas.html', resultados=resultados, imagenes=imagenes)
 
 @farmaceutico_bp.route('/procesar_venta', methods=['POST'])
 def procesar_venta():
@@ -28,21 +35,26 @@ def procesar_venta():
         for k, v in request.form.items() if k.startswith("cantidades[")
     }
     id_usuario = session.get('usuario_id') or 1
-    productos = db.session.query(Producto).filter(Producto.id_producto.in_(cantidades.keys())).all()
+    resultado = query(id_sucursal=1)
+    productos = resultado.filter(Producto.id_producto.in_(cantidades.keys())).all()
 
     total = 0.0
     detalles = []
 
-    for producto in productos:
+    for producto, inventario in productos:
         cantidad = cantidades.get(producto.id_producto, 0)
         if cantidad > 0:
-            if producto.stock_actual < cantidad:
+            if inventario.stock_disponible < cantidad:
                 flash(f"Stock insuficiente para {producto.nombre}", "danger")
                 return redirect(url_for('farmaceutico.ventas'))
+            # Calcular subtotal y actualizar total
             subtotal = float(producto.precio) * cantidad
             total += subtotal
+            # Agregar detalle de venta
             detalles.append((producto, cantidad, subtotal))
-            producto.stock_actual -= cantidad
+            # Actualizar stock disponible
+            inventario.stock_disponible -= cantidad
+            inventario.fecha = date.today()  # Actualizar fecha de inventario
 
     if total == 0:
         flash("No se seleccionaron productos.", "warning")
@@ -60,7 +72,7 @@ def procesar_venta():
             precio_unitario=producto.precio,
             subtotal=subtotal
         ))
-
+    
     db.session.commit()
     return redirect(url_for('farmaceutico.generar_boleta', id_venta=venta.id_venta))
 
