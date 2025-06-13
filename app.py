@@ -18,6 +18,7 @@ app.register_blueprint(gerente_bp, url_prefix='/gerente')
 @app.route('/')
 def index():
     return redirect(url_for('auth.login'))
+    #http://44.204.236.124:5000/login url de inicio de sesión
 
 if __name__ == '__main__':
     app.run(debug=True, host="0.0.0.0")
