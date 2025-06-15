@@ -18,8 +18,8 @@ def query(id_sucursal):
     query = query.filter(Inventario.id_sucursal == id_sucursal).order_by(Producto.id_producto)
     return query
 
-@farmaceutico_bp.route('/dashboard')
-def dashboard():
+@farmaceutico_bp.route('/menu')
+def menu():
     return render_template('farmaceutico/home.html')
 
 @farmaceutico_bp.route('/ventas')

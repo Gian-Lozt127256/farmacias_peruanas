@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 import pickle
 import json
-from datetime import datetime, timedelta
+from datetime import date, timedelta
 
 class PredictionService:
     
@@ -24,7 +24,7 @@ class PredictionService:
         query = db.session.query(FactVentas)
         
         # Filtrar por fechas recientes
-        fecha_limite = datetime.now() - timedelta(days=limit_days)
+        fecha_limite = date.today() - timedelta(days=limit_days)
         query = query.filter(FactVentas.fecha_proceso >= fecha_limite)
         
         if sucursal_id:

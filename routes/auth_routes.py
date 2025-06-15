@@ -25,9 +25,9 @@ def login():
                 session['rol'] = usuario.rol.nombre
 
                 if usuario.rol.nombre == 'Farmaceutico':
-                    return redirect(url_for('farmaceutico.dashboard'))
+                    return redirect(url_for('farmaceutico.menu'))
                 elif usuario.rol.nombre == 'Analista':
-                    return redirect(url_for('analista.dashboard'))
+                    return redirect(url_for('analista.menu'))
                 elif usuario.rol.nombre == 'Gerente':
                     return redirect(url_for('gerente.dashboard'))
             else:

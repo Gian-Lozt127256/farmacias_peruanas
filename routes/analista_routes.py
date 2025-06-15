@@ -17,8 +17,8 @@ import io
 
 analista_bp = Blueprint('analista', __name__, template_folder='../templates/analista')
 
-@analista_bp.route('/home')
-def home():
+@analista_bp.route('/menu')
+def menu():
     return render_template('analista/home.html')
 
 @analista_bp.route('/monitoreo')
